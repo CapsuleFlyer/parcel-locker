@@ -76,6 +76,30 @@ mutant-detection heatmap). Insert them.
   B fast transition coverage but greedy/no memory of history; C systematic for length-2 history, but
   fixed full-length tests and blind to length-3+ faults and to input classes outside the alphabet.
 
+## 9b. Extended evaluation (optional but strengthens sections 6-10)
+Describe as a *supplement* to the required protocol (required A/B/C and the 3x5x500x20 protocol are
+unchanged). Contents and findings are in the README table and `results/extended/`:
+`summary.csv` (means, sd, 95 % CI), `comparisons.csv` (paired permutation tests, Bonferroni over
+150 comparisons), `mutant_matrix.csv`, `oracle_ablation.csv`, `model_mutants.csv`, charts in
+`results/extended/charts/`.
+Key points to discuss in your own words:
+* Coverage vs fault detection: pair 100 % pair coverage but 82.8 % mutation score vs random 87.2 % / 86.9 %.
+  Explain via the mutants only random/scenario kill (M19, H05: 3 repeated delivery cycles) and why
+  pair coverage (history length 2) cannot guarantee them. Random's own weak spot is M17 (a rare pair).
+* Fair comparison: equal step budget (5000 steps) leaves conclusions unchanged; per-step efficiency
+  favours pair (first kill after ~114 steps vs ~221 for random).
+* Input-alphabet gaps (M16, H01, H10) cap every strategy; enriching the alphabet lifts all of them
+  (random 86.9 -> 97.2) - a bigger effect than the choice of strategy.
+* Ablations: model guidance (random vs random_pure), oracle layers (55-59 % -> 83-86 %), invariants
+  alone 45-48 %, message-only mutants need message comparison.
+* Model mutation: 6/6 wrong models exposed.
+* Honest limits: the `scenario` strategy was added *after* seeing that B/C miss M19 (post-hoc, so its
+  advantage on M19/H05 is partly by construction); held-out mutants were written by an AI agent that saw
+  only the SUT and requirements - more independent than my own, but not human-independent and from the
+  same model family as the rest of the code; CIs are t-based, and many cells have sd = 0 because outcomes are
+  deterministic per mutant, so a zero-width CI is not "certainty"; mutation score is dominated by a
+  handful of mutants (29 non-equivalent); equivalence of E01-E04/H11-H12 argued + bounded search depth 4.
+
 ## 10. Threats to validity
 * Small model (4 states) → ceiling effects; results may not generalise.
 * Mutants hand-written by the author; M17–M19 designed with knowledge of generator behaviour (bias).

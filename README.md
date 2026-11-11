@@ -14,10 +14,12 @@ requirements ──► executable model ──► generators (A/B/C) ──► r
 ## Quick start
 
 ```bash
-python -m unittest discover -s tests -v     # 41 tests: model, generators, runner, oracle, metrics, mutants
+python -m unittest discover -s tests -v     # 54 tests: model, generators, runner, oracle, metrics, mutants, extensions
 python -m locker demo                       # 1-minute end-to-end walkthrough
 python -m locker experiment                 # full Task-5 protocol -> results/   (~15 s)
 python -m locker report                     # charts -> results/charts/          (needs matplotlib)
+python -m locker extended                   # extended evaluation -> results/extended/ (~6 min)
+python -m locker report --extended --out results/extended
 ```
 
 No installation is needed; run everything from the repository root.
@@ -57,14 +59,18 @@ regenerates every file in `results/`. Generation is deterministic (checked in te
 | `locker/runner.py` | `SequenceRunner`: lock-step execution, per-test `ExecutionRecord` |
 | `locker/generators.py` | Strategy A random, B coverage-directed, C transition-pair |
 | `locker/metrics.py` | State / transition / transition-pair coverage, redundancy, mutation score |
-| `locker/mutants.py` | 19 non-equivalent + 2 equivalent mutants (subclasses of the SUT) |
+| `locker/mutants.py` | 19 non-equivalent + 4 equivalent mutants (subclasses of the SUT) |
+| `locker/mutants_heldout.py` | 12 held-out mutants (10 real, 2 equivalent) written independently of the generators |
+| `locker/model_mutants.py` | 6 deliberately wrong models, used to validate the framework from the other side |
+| `locker/extended.py` | Extended evaluation: 30 seeds, CIs, permutation tests, equal-step regime, oracle ablation |
 | `locker/mutation.py` | Run mutants on test sets; bounded exhaustive search |
 | `locker/experiments.py`, `report.py`, `cli.py` | Experiment protocol, charts, CLI |
 | `tests/` | Unit tests (`test_sut_smoke.py` is the provided smoke test) |
 | `docs/MODEL.md` | States, variables, operations, guards, invariants, assumptions, diagram |
 | `docs/REPORT_SKELETON.md` | Technical-report outline pre-filled with findings and TODOs |
 | `docs/VIVA_PREP.md` | Likely change requests and exactly which files each one touches |
-| `results/` | Raw tests, per-run/per-strategy summaries, mutant matrices, charts, `experiment.json` |
+| `results/` | Required protocol: raw tests, summaries, mutant matrices, charts, `experiment.json` |
+| `results/extended/` | Extended evaluation outputs (CSV, JSON, charts) |
 
 ## Design in one paragraph
 
@@ -88,6 +94,46 @@ subclasses of the SUT; each test set is replayed against every mutant to compute
 pair-triggered M17, B and C miss the three-cycle fault M19, and all miss M16 (needs a near-miss
 credential; killed with `--near-miss`). Union over strategies: 18/19 = 94.7 %. Higher coverage did not
 translate into a higher score — see `docs/REPORT_SKELETON.md` for the discussion points.
+
+## Extended evaluation (beyond the minimum protocol)
+
+The required protocol above is unchanged. `python -m locker extended` adds, each addressing a
+limitation of it: 30 seeds with 95 % CIs and Bonferroni-corrected paired permutation tests; an
+**equal step budget** regime (the strategies generate tests of different lengths); two supplementary
+strategies (`scenario` usage-profile testing, `random_pure` = Strategy A without model guidance);
+**12 held-out mutants** written by a separate agent that saw only the SUT and requirements, never the
+generators or my mutants; an **enriched input alphabet** regime; an **oracle ablation**; and
+**model mutation**. Required strategies A/B/C are untouched; the extras are supplementary.
+
+Mutation score over all 29 non-equivalent mutants (core + held-out), mean over 30 seeds, 95 % CI:
+
+| Strategy | 500 tests, default alphabet | Equal 5000-step budget | 500 tests, enriched alphabet | Pair cov. (default) |
+|---|---|---|---|---|
+| random (A) | 86.9 ± 0.5 | 86.9 ± 0.5 | 97.2 ± 0.5 | 87.2 % |
+| coverage (B) | 82.8 ± 0.0 | 82.3 ± 0.5 | 92.8 ± 0.4 | 99.9 % |
+| pair (C) | 82.8 ± 0.0 | 82.8 ± 0.0 | 93.3 ± 0.5 | 100 % |
+| scenario (extra) | 87.9 ± 0.7 | 87.3 ± 0.6 | 96.9 ± 0.4 | 82.6 % |
+| random_pure (ablation) | 80.6 ± 0.8 | 80.6 ± 0.8 | 89.5 ± 0.9 | 95.9 % |
+
+What the data says (details and caveats in `docs/REPORT_SKELETON.md`):
+* **Higher structural coverage did not give a higher mutation score; it was slightly lower.**
+  The systematic strategies (B, C) never repeat full delivery cycles, so they miss the history-dependent
+  faults M19 and H05 (third retrieval), which random and scenario testing find in 30/30 seeds.
+  Random vs pair: +4.1 points, Bonferroni p = 0.0025. Random vs scenario is not significant.
+* **The equal-budget regime does not change the conclusions.** Pair needs 250 tests where random needs 478
+  for the same 5000 steps, and finds its first kill in about half the steps (114 vs 221).
+* **Three mutants survived every strategy under the default alphabet** (M16 prefix-match, H01 lowercase
+  customer IDs, H10 another customer's code). They need input classes the default alphabet lacks; the
+  enriched alphabet kills all three in 30/30 seeds for every strategy.
+* **Model guidance helps:** `random` beats `random_pure` by 6.3 points (86.9 vs 80.6).
+* **Oracle ablation** (mutation score, random/coverage/pair): accepted flag only 55-59 %; + message text
+  62-66 %; + full snapshot vs model 83-86 %; invariants + rejection purity *without* the model 45-48 %.
+  The model comparison does the heavy lifting; invariants and rejection purity add no extra kills on this
+  mutant set (they give better diagnostics). Message checking matters only for the two message-only
+  mutants H03/H04, which is why assumption A8 is documented.
+* **Model mutation:** all 6 deliberately wrong models are exposed against the reference SUT (e.g. "cancel
+  allowed when occupied" takes 2 tests for B/C but 50 for A), evidence the framework would reveal a
+  mis-specified model.
 
 ## AI-assistance disclosure
 

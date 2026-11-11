@@ -112,3 +112,87 @@ def make_charts(results_dir: str = "results") -> list[str]:
     ax.set_title("Mutant detection rate across 5 seeds", fontsize=10)
     save(fig, "mutant_detection.png")
     return written
+
+
+def make_extended_charts(results_dir: str = "results/extended") -> list[str]:
+    """Charts for the extended evaluation (CI bars, equal-budget, mutant matrix, oracle ablation)."""
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    rd = Path(results_dir)
+    data = json.loads((rd / "experiment_extended.json").read_text(encoding="utf-8"))
+    out_dir = rd / "charts"
+    out_dir.mkdir(exist_ok=True)
+    summary = data["summary"]
+    strategies = data["config"]["strategies"]
+    colors = {"random": "#4c78a8", "coverage": "#f58518", "pair": "#54a24b",
+              "scenario": "#b279a2", "random_pure": "#9d9d9d"}
+    regimes = [("fixed_tests", "500 tests each"), ("equal_steps", "equal step budget"),
+               ("enriched_fixed_tests", "500 tests, enriched alphabet")]
+    written = []
+
+    def save(fig, name):
+        p = out_dir / name
+        fig.tight_layout()
+        fig.savefig(p, dpi=160)
+        plt.close(fig)
+        written.append(str(p))
+
+    for metric, title, fname, lo in (("mut_all", "Mutation score (all mutants, % ± 95% CI)",
+                                      "ext_mutation_score.png", 0),
+                                     ("pair_cov", "Transition-pair coverage (% ± 95% CI)",
+                                      "ext_pair_coverage.png", 50)):
+        fig, axes = plt.subplots(1, 3, figsize=(13, 4), sharey=True)
+        for ax, (reg, label) in zip(axes, regimes):
+            rows = {s["strategy"]: s for s in summary if s["regime"] == reg}
+            ys = [rows[s][f"{metric}_mean"] for s in strategies]
+            es = [rows[s][f"{metric}_ci95"] for s in strategies]
+            ax.bar(range(len(strategies)), ys, yerr=es, capsize=3,
+                   color=[colors[s] for s in strategies])
+            ax.set_xticks(range(len(strategies)), strategies, rotation=30, ha="right")
+            ax.set_title(label, fontsize=10)
+            ax.set_ylim(lo, 101)
+        axes[0].set_ylabel("%")
+        fig.suptitle(title)
+        save(fig, fname)
+
+    # mutant detection matrix (fixed_tests and enriched)
+    matrix = data["mutant_matrix"]
+    cols = [(r, s) for r in ("fixed_tests", "enriched_fixed_tests") for s in strategies]
+    grid = []
+    for m in matrix:
+        row = []
+        for r, s in cols:
+            k, n = m[f"{r}:{s}"].split("/")
+            row.append(int(k) / int(n))
+        grid.append(row)
+    fig, ax = plt.subplots(figsize=(11, 0.28 * len(matrix) + 1.8))
+    ax.imshow(grid, vmin=0, vmax=1, cmap="Blues", aspect="auto")
+    ax.set_xticks(range(len(cols)), [f"{'enr.' if r.startswith('enriched') else 'def.'}\n{s}"
+                                     for r, s in cols], fontsize=7)
+    ax.set_yticks(range(len(matrix)), [f'{m["id"]} {m["name"]}' for m in matrix], fontsize=7)
+    for i, row in enumerate(grid):
+        for j, v in enumerate(row):
+            ax.text(j, i, f"{v:.0%}", ha="center", va="center", fontsize=6,
+                    color="white" if v > 0.6 else "black")
+    ax.set_title("Mutant detection rate over seeds (def. = default alphabet, enr. = enriched)",
+                 fontsize=9)
+    save(fig, "ext_mutant_matrix.png")
+
+    # oracle ablation
+    ab = data["oracle_ablation"]
+    names = list(dict.fromkeys(r["oracle"] for r in ab))
+    fig, ax = plt.subplots(figsize=(8, 3.8))
+    for i, strat in enumerate(("random", "coverage", "pair")):
+        ys = [next(r["mutation_score_mean"] for r in ab if r["oracle"] == n and r["strategy"] == strat)
+              for n in names]
+        ax.barh([j + (i - 1) * 0.27 for j in range(len(names))], ys, 0.27, label=strat,
+                color=colors[strat])
+    ax.set_yticks(range(len(names)), names, fontsize=8)
+    ax.invert_yaxis()
+    ax.set_xlabel("mutation score %")
+    ax.set_title("Oracle ablation: what each oracle layer contributes")
+    ax.legend(fontsize=8)
+    save(fig, "ext_oracle_ablation.png")
+    return written

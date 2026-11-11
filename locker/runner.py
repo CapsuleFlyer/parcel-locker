@@ -87,10 +87,17 @@ class SequenceRunner:
 
     def __init__(self, sut_factory: Callable[[], object] = ParcelLocker,
                  model_factory: Callable[[], LockerModel] = LockerModel,
-                 compare_messages: bool = True):
+                 compare_messages: bool = True, compare_result: bool = True,
+                 compare_state: bool = True, check_invariants: bool = True,
+                 check_reject_purity: bool = True):
+        """Oracle layers can be switched off individually (used by the oracle ablation)."""
         self.sut_factory = sut_factory
         self.model_factory = model_factory
         self.compare_messages = compare_messages
+        self.compare_result = compare_result
+        self.compare_state = compare_state
+        self.check_invariants = check_invariants
+        self.check_reject_purity = check_reject_purity
 
     def run(self, sequence: Sequence[Command], test_id: str = "", strategy: str = "",
             seed: Optional[int] = None) -> ExecutionRecord:
@@ -119,9 +126,12 @@ class SequenceRunner:
             rec.expected_result, rec.actual_result = expected, actual
             rec.expected_final_state, rec.actual_final_state = exp_snap, after
 
-            problems = oracle.compare_step(expected, actual, exp_snap, after, self.compare_messages)
-            problems += oracle.check_snapshot_invariants(after)
-            problems += oracle.check_no_mutation_on_reject(before, after, actual)
+            problems = oracle.compare_step(expected, actual, exp_snap, after, self.compare_messages,
+                                           self.compare_result, self.compare_state)
+            if self.check_invariants:
+                problems += oracle.check_snapshot_invariants(after)
+            if self.check_reject_purity:
+                problems += oracle.check_no_mutation_on_reject(before, after, actual)
             if problems:
                 kind = problems[0][0]
                 details = " | ".join(f"[{k}] {d}" for k, d in problems)

@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Iterator, Optional, Sequence
 
 from .generators import DEFAULT_CUSTOMERS, candidate_commands
@@ -26,26 +26,31 @@ class MutantRun:
     failure_kind: str = ""
     failure_details: str = ""
     exec_time_s: float = 0.0
+    kill_indices: list = field(default_factory=list)   # 0-based indices of killing tests
 
 
 def run_mutant_on_set(spec: MutantSpec, sequences: Sequence[Sequence[Command]],
-                      strategy: str = "", seed: Optional[int] = None) -> MutantRun:
-    runner = SequenceRunner(sut_factory=spec.factory)
+                      strategy: str = "", seed: Optional[int] = None,
+                      runner_kwargs: Optional[dict] = None, stop_at_first: bool = False) -> MutantRun:
+    runner = SequenceRunner(sut_factory=spec.factory, **(runner_kwargs or {}))
     t0 = time.perf_counter()
-    kills, first = 0, None
+    kills, first, kill_idx = 0, None, []
     for i, seq in enumerate(sequences):
         rec = runner.run(seq, f"{strategy}-s{seed}-{i:04d}", strategy, seed)
         if not rec.passed:
             kills += 1
+            kill_idx.append(i)
             if first is None:
                 first = (i, rec)
+            if stop_at_first:
+                break
     elapsed = time.perf_counter() - t0
     if first is None:
         return MutantRun(spec.id, strategy, seed, False, 0, None, exec_time_s=elapsed)
     i, rec = first
     return MutantRun(spec.id, strategy, seed, True, kills, i + 1, rec.test_id,
                      format_sequence(rec.sequence), rec.failure_kind or "",
-                     rec.failure_details, elapsed)
+                     rec.failure_details, elapsed, kill_idx)
 
 
 # --------------------------------------------------------------------------- #

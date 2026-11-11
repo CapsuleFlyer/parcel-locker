@@ -34,15 +34,17 @@ def snapshot_dict(s: Snapshot) -> dict:
 
 
 def compare_step(expected: Result, actual: Result, expected_snap: Snapshot,
-                 actual_snap: Snapshot, compare_messages: bool = True) -> list[Problem]:
+                 actual_snap: Snapshot, compare_messages: bool = True,
+                 compare_result: bool = True, compare_state: bool = True) -> list[Problem]:
     problems: list[Problem] = []
-    if expected.accepted != actual.accepted:
-        problems.append((RESULT_MISMATCH,
-                         f"accepted: expected {expected.accepted}, actual {actual.accepted}"))
-    elif compare_messages and expected.message != actual.message:
-        problems.append((RESULT_MISMATCH,
-                         f"message: expected {expected.message!r}, actual {actual.message!r}"))
-    if expected_snap != actual_snap:
+    if compare_result:
+        if expected.accepted != actual.accepted:
+            problems.append((RESULT_MISMATCH,
+                             f"accepted: expected {expected.accepted}, actual {actual.accepted}"))
+        elif compare_messages and expected.message != actual.message:
+            problems.append((RESULT_MISMATCH,
+                             f"message: expected {expected.message!r}, actual {actual.message!r}"))
+    if compare_state and expected_snap != actual_snap:
         e, a = snapshot_dict(expected_snap), snapshot_dict(actual_snap)
         diff = [f"{k}: expected {e[k]!r}, actual {a[k]!r}" for k in e if e[k] != a[k]]
         problems.append((STATE_MISMATCH, "; ".join(diff)))

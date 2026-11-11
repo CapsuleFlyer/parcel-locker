@@ -32,7 +32,7 @@
   },
   "environment": {
     "python": "3.13.18",
-    "platform": "Linux-6.18.44-fc-v310-x86_64-with-glibc2.39"
+    "platform": "Linux-6.18.44-fc-v378-x86_64-with-glibc2.39"
   },
   "summary_by_strategy": [
     {
@@ -54,12 +54,12 @@
       "mean_length_sd": 0.1539,
       "total_steps_mean": 5218,
       "total_steps_sd": 76.9285,
-      "gen_time_s_mean": 0.075,
-      "gen_time_s_sd": 0.002,
-      "exec_time_s_mean": 0.0158,
-      "exec_time_s_sd": 0.0007,
-      "mutation_exec_time_s_mean": 0.3008,
-      "mutation_exec_time_s_sd": 0.0046,
+      "gen_time_s_mean": 0.1034,
+      "gen_time_s_sd": 0.003,
+      "exec_time_s_mean": 0.0229,
+      "exec_time_s_sd": 0.0011,
+      "mutation_exec_time_s_mean": 0.471,
+      "mutation_exec_time_s_sd": 0.0112,
       "reference_failures": 0
     },
     {
@@ -81,12 +81,12 @@
       "mean_length_sd": 0.226,
       "total_steps_mean": 7500.8,
       "total_steps_sd": 112.9942,
-      "gen_time_s_mean": 0.2975,
-      "gen_time_s_sd": 0.0039,
-      "exec_time_s_mean": 0.0248,
-      "exec_time_s_sd": 0.0069,
-      "mutation_exec_time_s_mean": 0.4361,
-      "mutation_exec_time_s_sd": 0.0139,
+      "gen_time_s_mean": 0.4227,
+      "gen_time_s_sd": 0.018,
+      "exec_time_s_mean": 0.0371,
+      "exec_time_s_sd": 0.0102,
+      "mutation_exec_time_s_mean": 0.6875,
+      "mutation_exec_time_s_sd": 0.0181,
       "reference_failures": 0
     },
     {
@@ -108,21 +108,23 @@
       "mean_length_sd": 0.0,
       "total_steps_mean": 10000,
       "total_steps_sd": 0.0,
-      "gen_time_s_mean": 0.4734,
-      "gen_time_s_sd": 0.0215,
-      "exec_time_s_mean": 0.0289,
-      "exec_time_s_sd": 0.0009,
-      "mutation_exec_time_s_mean": 0.5757,
-      "mutation_exec_time_s_sd": 0.0136,
+      "gen_time_s_mean": 0.6498,
+      "gen_time_s_sd": 0.0203,
+      "exec_time_s_mean": 0.0405,
+      "exec_time_s_sd": 0.0005,
+      "mutation_exec_time_s_mean": 0.9032,
+      "mutation_exec_time_s_sd": 0.0463,
       "reference_failures": 0
     }
   ],
   "union_mutation": {
     "all_strategies": {
-      "total_mutants": 21,
+      "total_mutants": 23,
       "equivalent": [
         "E01",
-        "E02"
+        "E02",
+        "E03",
+        "E04"
       ],
       "considered": 19,
       "detected": [
@@ -151,10 +153,12 @@
       "mutation_score": 94.74
     },
     "random": {
-      "total_mutants": 21,
+      "total_mutants": 23,
       "equivalent": [
         "E01",
-        "E02"
+        "E02",
+        "E03",
+        "E04"
       ],
       "considered": 19,
       "detected": [
@@ -183,10 +187,12 @@
       "mutation_score": 89.47
     },
     "coverage": {
-      "total_mutants": 21,
+      "total_mutants": 23,
       "equivalent": [
         "E01",
-        "E02"
+        "E02",
+        "E03",
+        "E04"
       ],
       "considered": 19,
       "detected": [
@@ -215,10 +221,12 @@
       "mutation_score": 89.47
     },
     "pair": {
-      "total_mutants": 21,
+      "total_mutants": 23,
       "equivalent": [
         "E01",
-        "E02"
+        "E02",
+        "E03",
+        "E04"
       ],
       "considered": 19,
       "detected": [
@@ -266,9 +274,9 @@
       "mean_tests_to_first_kill": 19.18,
       "unique_ratio": 0.956,
       "duplicates": 22,
-      "gen_time_s": 0.0775,
-      "exec_time_s": 0.0155,
-      "mutation_exec_time_s": 0.3063
+      "gen_time_s": 0.108,
+      "exec_time_s": 0.0234,
+      "mutation_exec_time_s": 0.4875
     },
     {
       "strategy": "random",
@@ -288,9 +296,9 @@
       "mean_tests_to_first_kill": 19.35,
       "unique_ratio": 0.958,
       "duplicates": 21,
-      "gen_time_s": 0.0727,
-      "exec_time_s": 0.0167,
-      "mutation_exec_time_s": 0.2937
+      "gen_time_s": 0.1001,
+      "exec_time_s": 0.0227,
+      "mutation_exec_time_s": 0.4593
     },
     {
       "strategy": "random",
@@ -310,9 +318,9 @@
       "mean_tests_to_first_kill": 24.35,
       "unique_ratio": 0.974,
       "duplicates": 13,
-      "gen_time_s": 0.0765,
-      "exec_time_s": 0.0153,
-      "mutation_exec_time_s": 0.2999
+      "gen_time_s": 0.1032,
+      "exec_time_s": 0.0215,
+      "mutation_exec_time_s": 0.4659
     },
     {
       "strategy": "random",
@@ -332,9 +340,9 @@
       "mean_tests_to_first_kill": 14.82,
       "unique_ratio": 0.964,
       "duplicates": 18,
-      "gen_time_s": 0.0739,
-      "exec_time_s": 0.0164,
-      "mutation_exec_time_s": 0.3016
+      "gen_time_s": 0.1017,
+      "exec_time_s": 0.0244,
+      "mutation_exec_time_s": 0.4655
     },
     {
       "strategy": "random",
@@ -354,9 +362,9 @@
       "mean_tests_to_first_kill": 20.29,
       "unique_ratio": 0.97,
       "duplicates": 15,
-      "gen_time_s": 0.0743,
-      "exec_time_s": 0.0153,
-      "mutation_exec_time_s": 0.3027
+      "gen_time_s": 0.1039,
+      "exec_time_s": 0.0226,
+      "mutation_exec_time_s": 0.477
     },
     {
       "strategy": "coverage",
@@ -376,9 +384,9 @@
       "mean_tests_to_first_kill": 24.53,
       "unique_ratio": 1.0,
       "duplicates": 0,
-      "gen_time_s": 0.3014,
-      "exec_time_s": 0.0214,
-      "mutation_exec_time_s": 0.4289
+      "gen_time_s": 0.3977,
+      "exec_time_s": 0.0299,
+      "mutation_exec_time_s": 0.6755
     },
     {
       "strategy": "coverage",
@@ -398,9 +406,9 @@
       "mean_tests_to_first_kill": 14.71,
       "unique_ratio": 1.0,
       "duplicates": 0,
-      "gen_time_s": 0.2941,
-      "exec_time_s": 0.0208,
-      "mutation_exec_time_s": 0.4156
+      "gen_time_s": 0.4341,
+      "exec_time_s": 0.0317,
+      "mutation_exec_time_s": 0.669
     },
     {
       "strategy": "coverage",
@@ -420,9 +428,9 @@
       "mean_tests_to_first_kill": 17.65,
       "unique_ratio": 1.0,
       "duplicates": 0,
-      "gen_time_s": 0.293,
-      "exec_time_s": 0.0231,
-      "mutation_exec_time_s": 0.4439
+      "gen_time_s": 0.4437,
+      "exec_time_s": 0.055,
+      "mutation_exec_time_s": 0.7079
     },
     {
       "strategy": "coverage",
@@ -442,9 +450,9 @@
       "mean_tests_to_first_kill": 34.76,
       "unique_ratio": 1.0,
       "duplicates": 0,
-      "gen_time_s": 0.2978,
-      "exec_time_s": 0.037,
-      "mutation_exec_time_s": 0.4415
+      "gen_time_s": 0.4131,
+      "exec_time_s": 0.0352,
+      "mutation_exec_time_s": 0.6792
     },
     {
       "strategy": "coverage",
@@ -464,9 +472,9 @@
       "mean_tests_to_first_kill": 9.88,
       "unique_ratio": 1.0,
       "duplicates": 0,
-      "gen_time_s": 0.3013,
-      "exec_time_s": 0.0217,
-      "mutation_exec_time_s": 0.4508
+      "gen_time_s": 0.4251,
+      "exec_time_s": 0.0339,
+      "mutation_exec_time_s": 0.7059
     },
     {
       "strategy": "pair",
@@ -486,9 +494,9 @@
       "mean_tests_to_first_kill": 6.24,
       "unique_ratio": 1.0,
       "duplicates": 0,
-      "gen_time_s": 0.4626,
-      "exec_time_s": 0.0287,
-      "mutation_exec_time_s": 0.5584
+      "gen_time_s": 0.649,
+      "exec_time_s": 0.0406,
+      "mutation_exec_time_s": 0.9848
     },
     {
       "strategy": "pair",
@@ -508,9 +516,9 @@
       "mean_tests_to_first_kill": 7.53,
       "unique_ratio": 1.0,
       "duplicates": 0,
-      "gen_time_s": 0.4483,
-      "exec_time_s": 0.0275,
-      "mutation_exec_time_s": 0.5702
+      "gen_time_s": 0.6709,
+      "exec_time_s": 0.0407,
+      "mutation_exec_time_s": 0.8929
     },
     {
       "strategy": "pair",
@@ -530,9 +538,9 @@
       "mean_tests_to_first_kill": 4.82,
       "unique_ratio": 1.0,
       "duplicates": 0,
-      "gen_time_s": 0.4756,
-      "exec_time_s": 0.0287,
-      "mutation_exec_time_s": 0.589
+      "gen_time_s": 0.6298,
+      "exec_time_s": 0.0409,
+      "mutation_exec_time_s": 0.8718
     },
     {
       "strategy": "pair",
@@ -552,9 +560,9 @@
       "mean_tests_to_first_kill": 4.65,
       "unique_ratio": 1.0,
       "duplicates": 0,
-      "gen_time_s": 0.5065,
-      "exec_time_s": 0.03,
-      "mutation_exec_time_s": 0.5902
+      "gen_time_s": 0.6697,
+      "exec_time_s": 0.0406,
+      "mutation_exec_time_s": 0.888
     },
     {
       "strategy": "pair",
@@ -574,9 +582,9 @@
       "mean_tests_to_first_kill": 6.35,
       "unique_ratio": 1.0,
       "duplicates": 0,
-      "gen_time_s": 0.474,
-      "exec_time_s": 0.0295,
-      "mutation_exec_time_s": 0.5706
+      "gen_time_s": 0.6298,
+      "exec_time_s": 0.0397,
+      "mutation_exec_time_s": 0.8785
     }
   ],
   "missed_transitions": {},
@@ -1021,6 +1029,48 @@
       "status": "equivalent (excluded from score)",
       "bounded_search": "{\"distinguishable\": false, \"checked\": 65536, \"depth\": 4, \"near_miss\": false, \"witness\": \"\", \"details\": \"\"}",
       "note": ""
+    },
+    {
+      "id": "E03",
+      "name": "RetrieveUnreachableGuard",
+      "category": "equivalent",
+      "description": "RETRIEVE gains a guard on customer_id being None while OCCUPIED.",
+      "expected_equivalent": true,
+      "random_seeds_detected": "0/5",
+      "random_mean_tests_to_first_kill": "",
+      "coverage_seeds_detected": "0/5",
+      "coverage_mean_tests_to_first_kill": "",
+      "pair_seeds_detected": "0/5",
+      "pair_mean_tests_to_first_kill": "",
+      "detected_by_any": false,
+      "example_killing_sequence": "",
+      "observed_incorrect_behaviour": "",
+      "witness": "",
+      "witness_fails_mutant": "",
+      "status": "equivalent (excluded from score)",
+      "bounded_search": "{\"distinguishable\": false, \"checked\": 65536, \"depth\": 4, \"near_miss\": false, \"witness\": \"\", \"details\": \"\"}",
+      "note": "Equivalent by invariant I3: customer_id is never None in OCCUPIED."
+    },
+    {
+      "id": "E04",
+      "name": "ExpireUnreachableGuard",
+      "category": "equivalent",
+      "description": "EXPIRE gains a guard on reservation_code being None while RESERVED.",
+      "expected_equivalent": true,
+      "random_seeds_detected": "0/5",
+      "random_mean_tests_to_first_kill": "",
+      "coverage_seeds_detected": "0/5",
+      "coverage_mean_tests_to_first_kill": "",
+      "pair_seeds_detected": "0/5",
+      "pair_mean_tests_to_first_kill": "",
+      "detected_by_any": false,
+      "example_killing_sequence": "",
+      "observed_incorrect_behaviour": "",
+      "witness": "",
+      "witness_fails_mutant": "",
+      "status": "equivalent (excluded from score)",
+      "bounded_search": "{\"distinguishable\": false, \"checked\": 65536, \"depth\": 4, \"near_miss\": false, \"witness\": \"\", \"details\": \"\"}",
+      "note": "Equivalent by invariant I2: reservation_code is never None in RESERVED."
     }
   ]
 }

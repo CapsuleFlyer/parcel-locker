@@ -1,0 +1,16 @@
+oracle,strategy,mutation_score_mean,mutation_score_sd,never_detected_by_any_strategy
+O0 accepted-flag only,random,55.17,0.0,H01 H03 H04 H05 H06 H10 M09 M10 M11 M16 M18 M19
+O0 accepted-flag only,coverage,57.24,1.89,H01 H03 H04 H05 H06 H10 M09 M10 M11 M16 M18 M19
+O0 accepted-flag only,pair,58.62,0.0,H01 H03 H04 H05 H06 H10 M09 M10 M11 M16 M18 M19
+O1 + message text,random,62.07,0.0,H01 H05 H06 H10 M09 M10 M11 M16 M18 M19
+O1 + message text,coverage,64.14,1.89,H01 H05 H06 H10 M09 M10 M11 M16 M18 M19
+O1 + message text,pair,65.52,0.0,H01 H05 H06 H10 M09 M10 M11 M16 M18 M19
+O2 + full snapshot vs model,random,86.21,0.0,H01 H10 M16
+O2 + full snapshot vs model,coverage,82.76,0.0,H01 H10 M16
+O2 + full snapshot vs model,pair,82.76,0.0,H01 H10 M16
+O3 full (model + invariants + purity),random,86.21,0.0,H01 H10 M16
+O3 full (model + invariants + purity),coverage,82.76,0.0,H01 H10 M16
+O3 full (model + invariants + purity),pair,82.76,0.0,H01 H10 M16
+O4 invariants + purity only (no model),random,48.28,0.0,H01 H02 H03 H04 H08 H10 M01 M02 M03 M04 M05 M07 M08 M16
+O4 invariants + purity only (no model),coverage,44.83,0.0,H01 H02 H03 H04 H08 H10 M01 M02 M03 M04 M05 M07 M08 M16
+O4 invariants + purity only (no model),pair,44.83,0.0,H01 H02 H03 H04 H08 H10 M01 M02 M03 M04 M05 M07 M08 M16

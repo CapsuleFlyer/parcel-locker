@@ -32,4 +32,10 @@ to re-run. Practise at least three of them before the viva.
   the failure record? (`python -m locker strategy --name random --mutant M03`)
 * How do seeds make the experiment reproducible? Why are sets sorted before choices?
   (`PYTHONHASHSEED` test)
+* Pair coverage reached 100 % but the mutation score was *lower* than random's. Why? (M19/H05 need 3
+  repeated cycles; pair coverage constrains history length 2; strategies stop caring once covered.)
+* Why is the extended `scenario` strategy partly post-hoc, and why do the held-out mutants matter?
+* What did the oracle ablation show about invariants vs the model? Which mutants need message checks?
+* What is model mutation and what does it tell you about the framework?
+* Why can a zero-width confidence interval be misleading here?
 * Which parts did you (not the AI tool) write and how would you modify them live?

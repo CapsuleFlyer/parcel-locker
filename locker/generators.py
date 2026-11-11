@@ -39,7 +39,8 @@ def candidate_commands(snap: Snapshot, customers=DEFAULT_CUSTOMERS,
     Credential input classes for DEPOSIT/RETRIEVE: the *correct* code (taken from
     the model snapshot, or a plausible one if none exists), an arbitrary wrong
     code, the empty code, and the *other* credential type (cross-use). With
-    ``near_miss`` a code that merely extends the correct one is added.
+    ``near_miss`` (the "enriched" alphabet) a code that merely extends the correct one and every
+    other customer's credentials are added.
     Customer IDs vary for RESERVE so identity-dependent defects can surface.
     EXPIRE is tried with the flag both set and unset.
     """
@@ -48,9 +49,12 @@ def candidate_commands(snap: Snapshot, customers=DEFAULT_CUSTOMERS,
 
     dep_codes = [res_code, WRONG_CODE, "", ret_code]
     rec_codes = [ret_code, WRONG_CODE, "", res_code]
-    if near_miss:
+    if near_miss:  # "enriched" alphabet: near-miss codes + other customers' credentials
         dep_codes.append(res_code + "x")
         rec_codes.append(ret_code + "x")
+        for cid in customers:
+            dep_codes.append(f"R-{cid}")
+            rec_codes.append(f"P-{cid}")
 
     cmds: list[Command] = [Command(Op.RESERVE, customer_id=c) for c in customers]
     cmds.append(Command(Op.CANCEL))
@@ -287,8 +291,73 @@ def _new_target(model, pool, rng, budget) -> list[TransitionKey]:
             return path + [t1, t2]
     return []
 
-GENERATORS = {
+# --------------------------------------------------------------------------- #
+# Extension strategies (NOT part of the three required strategies A/B/C)
+# --------------------------------------------------------------------------- #
+class PureRandomGenerator(RandomWalkGenerator):
+    """Ablation of Strategy A: purely random selection (no model guidance, p_valid = 0)."""
+    name = "random_pure"
+
+    def __init__(self, seed: int, max_length: int, **kw):
+        super().__init__(seed, max_length, p_valid=0.0, **kw)
+
+
+_SCENARIOS = {  # use-case scenarios as (operation, expected outcome) steps; all end in AVAILABLE
+    "deliver": (("RESERVE", "reserved"), ("DEPOSIT", "deposited"), ("RETRIEVE", "retrieved")),
+    "cancel": (("RESERVE", "reserved"), ("CANCEL", "cancelled")),
+    "expire": (("RESERVE", "reserved"), ("EXPIRE", "expired")),
+    "maintenance": (("DISABLE", "disabled"), ("ENABLE", "enabled")),
+}
+_SCENARIO_WEIGHTS = {"deliver": 0.55, "cancel": 0.15, "expire": 0.15, "maintenance": 0.15}
+
+
+class ScenarioGenerator(_Generator):
+    """Extension strategy D: usage-profile / scenario-composition testing.
+
+    Sequences are random *compositions of complete use-case scenarios* (delivery,
+    cancellation, expiry, maintenance; delivery weighted highest) with
+    *noise injection*: before each scenario step, with probability ``p_noise``
+    (repeatedly) a command the model rejects is inserted. Unlike A-C this explores
+    long, repeated, realistic lifecycles (e.g. several delivery cycles in a row)
+    rather than maximising structural coverage. Length: U(max_length//2..max_length).
+    """
+    name = "scenario"
+
+    def __init__(self, seed: int, max_length: int, p_noise: float = 0.3, **kw):
+        super().__init__(seed, max_length, **kw)
+        self.p_noise = p_noise
+
+    def generate(self, count: int) -> list[list[Command]]:
+        rng = random.Random(self.seed)
+        names = list(_SCENARIOS)
+        weights = [_SCENARIO_WEIGHTS[n] for n in names]
+        out = []
+        for _ in range(count):
+            model, seq = LockerModel(), []
+            target = rng.randint(max(1, self.max_length // 2), self.max_length)
+            while len(seq) < target:
+                for op_name, outcome in _SCENARIOS[rng.choices(names, weights)[0]]:
+                    while len(seq) < target and rng.random() < self.p_noise:
+                        rejected = [c for c in self._cands(model) if not model.is_valid(c)]
+                        noise = rng.choice(rejected)
+                        model.step(noise)
+                        seq.append(noise)
+                    if len(seq) >= target:
+                        break
+                    options = [c for c in self._cands(model)
+                               if model.peek(c).op.name == op_name
+                               and model.peek(c).outcome == outcome]
+                    cmd = rng.choice(options)
+                    model.step(cmd)
+                    seq.append(cmd)
+            out.append(seq)
+        return out
+
+
+GENERATORS = {  # the three REQUIRED strategies
     RandomWalkGenerator.name: RandomWalkGenerator,
     CoverageGuidedGenerator.name: CoverageGuidedGenerator,
     TransitionPairGenerator.name: TransitionPairGenerator,
 }
+EXTENDED_GENERATORS = {**GENERATORS, ScenarioGenerator.name: ScenarioGenerator,
+                       PureRandomGenerator.name: PureRandomGenerator}

@@ -151,6 +151,7 @@ def run_experiment(cfg: ExperimentConfig = ExperimentConfig(),
     for s in sets:
         for r in s["_mutant_runs"]:
             d = asdict(r)
+            d.pop("kill_indices", None)
             d["exec_time_s"] = round(d["exec_time_s"], 5)
             d["equivalent_expected"] = by_id[r.mutant_id].expected_equivalent
             mutant_run_rows.append(d)

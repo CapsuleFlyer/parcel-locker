@@ -4,7 +4,8 @@
   strategy    generate + execute one strategy (optionally against a mutant)
   mutation    run all mutants against chosen strategies
   experiment  full Task-5 protocol -> results/ (CSV + JSON)
-  report      render charts from results/ (needs matplotlib)
+  extended    extended evaluation -> results/extended/ (30 seeds, CIs, held-out mutants, ...)
+  report      render charts from results/ (needs matplotlib; --extended for the extended set)
 """
 from __future__ import annotations
 
@@ -12,7 +13,7 @@ import argparse
 import sys
 
 from .experiments import ExperimentConfig, run_experiment
-from .generators import GENERATORS
+from .generators import EXTENDED_GENERATORS, GENERATORS
 from .metrics import calculate_coverage, mutation_summary
 from .model import LockerModel, transition_catalogue, transition_pairs
 from .mutants import MUTANTS
@@ -22,10 +23,12 @@ from .types import Command, Operation as Op
 
 
 def _mutant_by_name(key: str):
-    for m in MUTANTS:
+    from .mutants_heldout import HELDOUT_MUTANTS
+    everything = tuple(MUTANTS) + tuple(HELDOUT_MUTANTS)
+    for m in everything:
         if key in (m.id, m.name):
             return m
-    raise SystemExit(f"unknown mutant {key!r}; choose from: " + ", ".join(m.id for m in MUTANTS))
+    raise SystemExit(f"unknown mutant {key!r}; choose from: " + ", ".join(m.id for m in everything))
 
 
 def cmd_demo(args) -> int:
@@ -68,7 +71,7 @@ def cmd_demo(args) -> int:
 
 
 def cmd_strategy(args) -> int:
-    gen = GENERATORS[args.name](args.seed, args.max_length, near_miss=args.near_miss)
+    gen = EXTENDED_GENERATORS[args.name](args.seed, args.max_length, near_miss=args.near_miss)
     seqs = gen.generate(args.count)
     spec = _mutant_by_name(args.mutant) if args.mutant else None
     runner = SequenceRunner(sut_factory=spec.factory) if spec else SequenceRunner()
@@ -130,12 +133,31 @@ def cmd_experiment(args) -> int:
     return 0
 
 
+def cmd_extended(args) -> int:
+    from .extended import ExtendedConfig, run_extended
+    cfg = ExtendedConfig(seeds=tuple(range(1, args.seeds + 1)), count=args.count,
+                         max_length=args.max_length, step_budget=args.step_budget, out_dir=args.out)
+    res = run_extended(cfg)
+    for regime in ("fixed_tests", "equal_steps", "enriched_fixed_tests"):
+        print(f"\n[{regime}]  strategy      pair%  mut_all%  mut_core%  mut_held%  steps->1st kill")
+        for s in (x for x in res["summary"] if x["regime"] == regime):
+            print(f"  {s['strategy']:13s} {s['pair_cov_mean']:8.2f} {s['mut_all_mean']:9.2f} "
+                  f"{s['mut_core_mean']:10.2f} {s['mut_heldout_mean']:10.2f} "
+                  f"{s['steps_to_first_kill_mean']:12.1f}")
+    return 0
+
+
 def cmd_report(args) -> int:
     try:
         from .report import make_charts
     except ImportError:  # pragma: no cover
         raise SystemExit("matplotlib is required for charts: pip install matplotlib")
-    for p in make_charts(args.out):
+    if args.extended:
+        from .report import make_extended_charts
+        paths = make_extended_charts(args.out)
+    else:
+        paths = make_charts(args.out)
+    for p in paths:
         print("wrote", p)
     return 0
 
@@ -154,7 +176,8 @@ def main(argv=None) -> int:
     sub.add_parser("demo", help="end-to-end demonstration").set_defaults(fn=cmd_demo)
 
     sp = sub.add_parser("strategy", help="run a single strategy")
-    sp.add_argument("--name", choices=sorted(GENERATORS), required=True)
+    sp.add_argument("--name", choices=sorted(EXTENDED_GENERATORS), required=True,
+                    help="random|coverage|pair (required strategies) or scenario|random_pure (extras)")
     sp.add_argument("--seed", type=int, default=1)
     sp.add_argument("--mutant", help="mutant id/name to test instead of the reference SUT")
     sp.add_argument("--show-failures", type=int, default=3)
@@ -174,7 +197,16 @@ def main(argv=None) -> int:
     common(sp)
     sp.set_defaults(fn=cmd_experiment)
 
+    sp = sub.add_parser("extended", help="extended evaluation (30 seeds, CIs, held-out mutants, ...)")
+    sp.add_argument("--seeds", type=int, default=30, help="number of seeds 1..N (default 30)")
+    sp.add_argument("--step-budget", type=int, default=5000, help="equal-steps regime budget")
+    sp.add_argument("--out", default="results/extended")
+    sp.add_argument("--count", type=int, default=500)
+    sp.add_argument("--max-length", type=int, default=20)
+    sp.set_defaults(fn=cmd_extended)
+
     sp = sub.add_parser("report", help="render charts from results")
+    sp.add_argument("--extended", action="store_true", help="charts for the extended evaluation")
     sp.add_argument("--out", default="results")
     sp.set_defaults(fn=cmd_report)
 

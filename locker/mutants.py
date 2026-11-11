@@ -247,6 +247,27 @@ class DepositRedundantReassign(ParcelLocker):
         return r
 
 
+class RetrieveUnreachableGuard(ParcelLocker):
+    """RETRIEVE gets an extra rejection when customer_id is None in OCCUPIED.
+
+    Equivalent: invariant I3 guarantees customer_id is never None when OCCUPIED, so the
+    extra branch is unreachable (equivalence needs reasoning about reachable states).
+    """
+    def execute(self, c: Command) -> Result:
+        if c.operation == Op.RETRIEVE and self.state == State.OCCUPIED and self.customer_id is None:
+            return Result(False, "invalid_retrieval_code")
+        return super().execute(c)
+
+
+class ExpireUnreachableGuard(ParcelLocker):
+    """EXPIRE additionally requires reservation_code to be None-free; always true in RESERVED (I2)."""
+    def execute(self, c: Command) -> Result:
+        if (c.operation == Op.EXPIRE and self.state == State.RESERVED and c.expired
+                and self.reservation_code is None):
+            return Result(False, "not_expired")
+        return super().execute(c)
+
+
 MUTANTS: tuple[MutantSpec, ...] = (
     MutantSpec("M01", "ReserveWhenOccupied", "illegal acceptance",
                "RESERVE is accepted in OCCUPIED and overwrites the parcel owner.",
@@ -324,4 +345,12 @@ MUTANTS: tuple[MutantSpec, ...] = (
     MutantSpec("E02", "DepositRedundantReassign", "equivalent",
                "DEPOSIT re-assigns the reservation code to its existing value.",
                DepositRedundantReassign, expected_equivalent=True),
+    MutantSpec("E03", "RetrieveUnreachableGuard", "equivalent",
+               "RETRIEVE gains a guard on customer_id being None while OCCUPIED.",
+               RetrieveUnreachableGuard, expected_equivalent=True,
+               note="Equivalent by invariant I3: customer_id is never None in OCCUPIED."),
+    MutantSpec("E04", "ExpireUnreachableGuard", "equivalent",
+               "EXPIRE gains a guard on reservation_code being None while RESERVED.",
+               ExpireUnreachableGuard, expected_equivalent=True,
+               note="Equivalent by invariant I2: reservation_code is never None in RESERVED."),
 )

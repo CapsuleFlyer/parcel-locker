@@ -1,0 +1,36 @@
+id,name,source,category,expected_equivalent,fixed_tests:random,fixed_tests:coverage,fixed_tests:pair,fixed_tests:scenario,fixed_tests:random_pure,equal_steps:random,equal_steps:coverage,equal_steps:pair,equal_steps:scenario,equal_steps:random_pure,enriched_fixed_tests:random,enriched_fixed_tests:coverage,enriched_fixed_tests:pair,enriched_fixed_tests:scenario,enriched_fixed_tests:random_pure
+M01,ReserveWhenOccupied,core,illegal acceptance,False,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30
+M02,DepositInMaintenance,core,illegal acceptance,False,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30
+M03,RetrieveWithoutAuth,core,missing authentication,False,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30
+M04,EarlyExpire,core,expiry policy,False,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30
+M05,CancelWhenOccupied,core,illegal acceptance,False,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30
+M06,DisableWhenReserved,core,illegal acceptance,False,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30
+M07,DepositIgnoresCode,core,missing authentication,False,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30
+M08,ExpireWhenOccupied,core,illegal acceptance,False,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30
+M09,StaleRetrievalCode,core,stale data,False,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30
+M10,StaleCustomerAfterRetrieve,core,stale data,False,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30
+M11,ExpireKeepsCustomer,core,stale data,False,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30
+M12,BadDepositWipesCode,core,state change on rejection,False,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30
+M13,InvalidAccessClearsParcel,core,state change on rejection,False,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30
+M14,RejectedReserveOverwritesCustomer,core,state change on rejection,False,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30
+M15,WrongRetrievalPrefix,core,wrong credential policy,False,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30
+M16,PrefixCodeMatchOnDeposit,core,weak authentication,False,0/30,0/30,0/30,0/30,0/30,0/30,0/30,0/30,0/30,0/30,30/30,30/30,30/30,30/30,30/30
+M17,DoubleCancelWhileOccupiedWipesCode,core,history-dependent (pair),False,6/30,30/30,30/30,15/30,19/30,6/30,26/30,30/30,9/30,19/30,6/30,29/30,30/30,3/30,16/30
+M18,DisableAfterRetrieveKeepsCustomer,core,history-dependent (pair),False,30/30,30/30,30/30,30/30,22/30,30/30,30/30,30/30,30/30,22/30,30/30,28/30,30/30,30/30,13/30
+M19,ThirdCycleStaleCode,core,history-dependent (long),False,30/30,0/30,0/30,30/30,0/30,30/30,0/30,0/30,30/30,0/30,30/30,0/30,1/30,30/30,0/30
+E01,EnableRedundantClear,core,equivalent,True,0/30,0/30,0/30,0/30,0/30,0/30,0/30,0/30,0/30,0/30,0/30,0/30,0/30,0/30,0/30
+E02,DepositRedundantReassign,core,equivalent,True,0/30,0/30,0/30,0/30,0/30,0/30,0/30,0/30,0/30,0/30,0/30,0/30,0/30,0/30,0/30
+E03,RetrieveUnreachableGuard,core,equivalent,True,0/30,0/30,0/30,0/30,0/30,0/30,0/30,0/30,0/30,0/30,0/30,0/30,0/30,0/30,0/30
+E04,ExpireUnreachableGuard,core,equivalent,True,0/30,0/30,0/30,0/30,0/30,0/30,0/30,0/30,0/30,0/30,0/30,0/30,0/30,0/30,0/30
+H01,case_folded_reservation_code,held-out,input-specific,False,0/30,0/30,0/30,0/30,0/30,0/30,0/30,0/30,0/30,0/30,30/30,30/30,30/30,30/30,30/30
+H02,c2_expires_without_flag,held-out,input-specific,False,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30
+H03,deposit_message_changed,held-out,message-only,False,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30
+H04,wrong_retrieval_message,held-out,message-only,False,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30
+H05,third_retrieve_keeps_customer,held-out,history-dependent,False,30/30,0/30,0/30,30/30,0/30,30/30,0/30,0/30,30/30,0/30,30/30,0/30,1/30,30/30,0/30
+H06,rejected_deposit_leaks_code,held-out,rejected-mutation,False,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30
+H07,invalid_access_wipes_code,held-out,rejected-mutation,False,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30
+H08,reserve_after_expire_rejected,held-out,history-dependent,False,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30
+H09,disable_from_reserved,held-out,guard,False,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30,30/30
+H10,retrieve_prefix_check,held-out,input-specific,False,0/30,0/30,0/30,0/30,0/30,0/30,0/30,0/30,0/30,0/30,30/30,30/30,30/30,30/30,30/30
+H11,retrieval_code_from_reservation_code,held-out,equivalent,True,0/30,0/30,0/30,0/30,0/30,0/30,0/30,0/30,0/30,0/30,0/30,0/30,0/30,0/30,0/30
+H12,cancel_keeps_retrieval_code,held-out,equivalent,True,0/30,0/30,0/30,0/30,0/30,0/30,0/30,0/30,0/30,0/30,0/30,0/30,0/30,0/30,0/30
