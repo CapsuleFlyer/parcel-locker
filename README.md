@@ -137,8 +137,28 @@ What the data says (details and caveats in `docs/REPORT_SKELETON.md`):
 
 ## AI-assistance disclosure
 
-> TODO (required by the assignment): state which parts were produced with AI assistance, which tool(s),
-> and what you reviewed/changed yourself.
+**Tools.** Claude (Anthropic; Claude Code and the Claude app) was used for most of this project.
+A second Claude agent instance wrote the 12 held-out mutants in `locker/mutants_heldout.py`,
+seeing only the SUT and the requirements, not the generators or my own mutants.
+
+**Produced with AI assistance:**
+* the executable model, oracle, runner, generators, metrics, mutants, model mutants, experiment and
+  extended-evaluation code, CLI and chart code (`locker/`);
+* all unit tests (`tests/`, except the provided `test_sut_smoke.py`);
+* `docs/MODEL.md`, `docs/REPORT_SKELETON.md`, `docs/VIVA_PREP.md` and this README;
+* the first draft of the technical report (kept as an editable Claude Docs document; export it as Word/PDF from the doc's Export menu and add it to the submission ZIP).
+
+**Not AI-generated:** the provided starter files (`locker/types.py`, `locker/sut.py`,
+`tests/test_sut_smoke.py`, `data/requirements.md`).
+
+**Results.** Every number in `results/` and in the report comes from running the code in this
+repository (`python -m locker experiment` and `python -m locker extended`); none was typed in by hand.
+Mutants M17-M19 were designed knowing how the generators behave, and the `scenario` strategy
+was added after seeing that B/C miss M19; both are disclosed as limitations in the report.
+
+**Student statement (to be completed by the submitting student):**
+> TODO: describe what *I* reviewed, ran, debugged or changed myself, and confirm that I can explain
+> and modify every module in the viva. The AI tool cannot make this statement on my behalf.
 
 ## Provided starter notes
 

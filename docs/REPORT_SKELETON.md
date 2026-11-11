@@ -1,5 +1,7 @@
 # Technical Report Skeleton (assignment §8)
 
+A full draft of this report exists as a Claude Docs document; export it (Word/PDF) and add it to the ZIP. This outline remains as a checklist.
+
 Pre-filled with facts from this repo's results; **rewrite the analysis in your own words** and
 check every number against `results/` before submitting. Items marked TODO need your judgement.
 
