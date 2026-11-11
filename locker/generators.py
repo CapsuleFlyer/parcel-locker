@@ -23,6 +23,7 @@ from collections import Counter, defaultdict, deque
 from typing import Optional
 
 from .model import LockerModel, TransitionKey, transition_catalogue, transition_pairs
+from .rules_config import get_policy
 from .types import Command, Operation as Op, Snapshot, State
 
 DEFAULT_CUSTOMERS = ("C1", "C2")
@@ -57,7 +58,10 @@ def candidate_commands(snap: Snapshot, customers=DEFAULT_CUSTOMERS,
             rec_codes.append(f"P-{cid}")
 
     cmds: list[Command] = [Command(Op.RESERVE, customer_id=c) for c in customers]
-    cmds.append(Command(Op.CANCEL))
+    if get_policy().cancel_requires_code:   # CANCEL has credential input classes too
+        cmds += [Command(Op.CANCEL, code=c) for c in dict.fromkeys([res_code, WRONG_CODE, ""])]
+    else:
+        cmds.append(Command(Op.CANCEL))
     cmds += [Command(Op.DEPOSIT, code=c) for c in dict.fromkeys(dep_codes)]
     cmds += [Command(Op.RETRIEVE, code=c) for c in dict.fromkeys(rec_codes)]
     cmds += [Command(Op.EXPIRE, expired=True), Command(Op.EXPIRE, expired=False)]
@@ -69,21 +73,32 @@ def candidate_commands(snap: Snapshot, customers=DEFAULT_CUSTOMERS,
 # --------------------------------------------------------------------------- #
 # Graph helpers over the model's abstract state graph
 # --------------------------------------------------------------------------- #
-_ACCEPTED_EDGES: dict[State, list[TransitionKey]] = defaultdict(list)
-for _t in transition_catalogue():
-    if _t.accepted and _t.src != _t.dst:
-        _ACCEPTED_EDGES[_t.src].append(_t)
+_EDGE_CACHE: dict = {}
+
+
+def _accepted_edges() -> dict[State, list[TransitionKey]]:
+    """Accepted state-changing transitions of the *active* model policy (cached per policy)."""
+    policy = get_policy()
+    edges = _EDGE_CACHE.get(policy)
+    if edges is None:
+        edges = defaultdict(list)
+        for t in transition_catalogue(policy):
+            if t.accepted and t.src != t.dst:
+                edges[t.src].append(t)
+        _EDGE_CACHE[policy] = edges
+    return edges
 
 
 def shortest_path(src: State, goals: set[State]) -> Optional[list[TransitionKey]]:
     """Shortest list of accepted transitions from ``src`` into any state in ``goals``."""
     if src in goals:
         return []
+    edges = _accepted_edges()
     seen = {src}
     queue: deque = deque([(src, [])])
     while queue:
         state, path = queue.popleft()
-        for t in _ACCEPTED_EDGES[state]:
+        for t in edges[state]:
             if t.dst in seen:
                 continue
             if t.dst in goals:
@@ -94,11 +109,12 @@ def shortest_path(src: State, goals: set[State]) -> Optional[list[TransitionKey]
 
 
 def _distances(src: State) -> dict[State, int]:
+    edges = _accepted_edges()
     dist = {src: 0}
     queue = deque([src])
     while queue:
         s = queue.popleft()
-        for t in _ACCEPTED_EDGES[s]:
+        for t in edges[s]:
             if t.dst not in dist:
                 dist[t.dst] = dist[s] + 1
                 queue.append(t.dst)
@@ -347,6 +363,11 @@ class ScenarioGenerator(_Generator):
                     options = [c for c in self._cands(model)
                                if model.peek(c).op.name == op_name
                                and model.peek(c).outcome == outcome]
+                    if not options:   # step impossible under the active rules (degenerate policy):
+                        noise = rng.choice([c for c in self._cands(model) if not model.is_valid(c)])
+                        model.step(noise)   # abandon this scenario, but still make progress
+                        seq.append(noise)
+                        break
                     cmd = rng.choice(options)
                     model.step(cmd)
                     seq.append(cmd)

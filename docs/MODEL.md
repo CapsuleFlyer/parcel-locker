@@ -1,7 +1,8 @@
 # State-Machine Model and Assumptions
 
 Source: `data/requirements.md` and the assignment text (Sections 3.1–3.3). Implemented in
-`locker/model.py`; the rule table there is the authoritative version of everything below.
+`locker/model.py`; the rule table there (built by `build_rules` from the tweakable facts in
+`locker/rules_config.py`) is the authoritative version of everything below.
 
 ## States and variables
 

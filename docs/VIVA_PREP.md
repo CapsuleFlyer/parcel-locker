@@ -3,19 +3,21 @@
 Assignment §10 says the instructor may change a rule live. For each, this lists what to edit and what
 to re-run. Practise at least three of them before the viva.
 
-**General workflow:** edit the rule table (`locker/model.py`) → note the catalogue changes
-(`python -c "from locker.model import *; print(len(transition_catalogue()), len(transition_pairs()))"`)
-→ if the SUT is changed too, the reference SUT's behaviour must match (or generate a SUT variant via
-`locker/mutants.py` style subclass) → `python -m unittest discover -s tests` → `python -m locker experiment`.
+**General workflow (details in `docs/CHANGE_REQUESTS.md`):** edit the matching field of `POLICY` in
+`locker/rules_config.py` → `python -m locker change` (model vs the unchanged SUT = detected change;
+model vs `PolicySUT` = consistent implementation) → note the catalogue/pair delta it prints →
+`python -m unittest discover -s tests` (the baseline pins fail on purpose while `POLICY` is edited) →
+revert by setting the value back (or `git checkout locker/rules_config.py` once committed). Presets: `python -m locker change --list`.
 
 | Change request | Edit | Fallout to explain |
 |---|---|---|
-| "Maintenance may now start while OCCUPIED" | add `(O, Op.DISABLE): [Rule("disabled", M, True)]` in `RULES`; decide effect on data (keep? clear?) via `EFFECTS["disabled"]`; invariant I1 must now allow data in MAINTENANCE | New transition(s) → catalogue/pairs grow; `ENABLE` from MAINTENANCE may now need to restore OCCUPIED (new state or flag). `tests/test_model.py::test_maintenance` and `test_counts_match_hand_derivation` (35/305) must be updated deliberately. Strategies B and C adapt automatically because they read the catalogue; A needs no change. |
-| "Cancel allowed in OCCUPIED" / "under an extra condition" | add a Rule in `RULES[(O, Op.CANCEL)]` with a guard function | Mutant M05 (`CancelWhenOccupied`) becomes *correct* behaviour → update/retire it. Oracle `I*` unaffected. |
-| "Retrieval auth changes (e.g. PIN, or code must match customer + parcel)" | change `retrieval_code_for` / `_code_matches_retrieval`; add input class in `candidate_commands` | Credential input classes in the generators; mutants M03, M09, M15, M16 interact. |
-| "Expiry policy: expired RESERVED goes to a grace state / parcel returned" | new `State` in `types.py` and `RULES`; adjust `_on_clear`/EXPIRE rule | New state raises state denominator to 5; coverage tables change; invariants add I5. |
-| "New operation (e.g. EXTEND reservation, REPORT_FAULT)" | add to `Operation` enum, `DEFAULT_REJECTION`, `RULES`, `candidate_commands` | Catalogue grows by ≥4 (one per state); generators pick it up through the alphabet. |
-| "Compare only accepted flag, not message" | `SequenceRunner(compare_messages=False)` | M-series mutants that only change messages would survive. |
+| "Maintenance may now start while OCCUPIED" | `disable_from=_states(A, O)` (preset `disable_when_occupied`) | 305 → 304 pairs, new transition `OCCUPIED--DISABLE[disabled]-->MAINTENANCE`; the parcel is discarded (data cleared). A variant where the parcel *stays* needs a new state (doc: "What the config cannot express"). Strategies B and C adapt through the catalogue; A only reaches it by chance. |
+| "Cancel allowed in OCCUPIED" | `cancel_from=_states(R, O)` (`cancel_when_occupied`) | Mutant M05 (`CancelWhenOccupied`) becomes *correct* behaviour → retire it from the score. |
+| "Cancel under an extra condition" | `cancel_requires_code=True` (`cancel_needs_code`) | New rejection transitions (36 transitions, 324 pairs); `CANCEL` gets credential input classes in the alphabet. |
+| "Retrieval auth changes" | `retrieve_also_accepts_reservation_code=True` (`retrieve_either_code`) or the code templates (`new_code_format`) | Oracle invariants I2/I3 follow the templates; mutants M03, M09, M15, M16 interact. A non-template mechanism (PIN + customer match) is a code edit of `_code_matches_*`. |
+| "Expiry policy changes" | `expire_target=M`, `expire_requires_flag=False`, `expire_from=_states(R, O)` (`expire_*` presets) | Catalogue size changes (34/36 transitions for the last two); M04 `EarlyExpire` and M08 `ExpireWhenOccupied` encode old rules. A *grace state* is a new `State`. |
+| "New operation (e.g. EXTEND, REPORT_FAULT)" | code: `Operation` enum, `DEFAULT_REJECTION`, `build_rules`, `candidate_commands`, `PolicySUT` | Catalogue grows by ≥ 4 (one per state); generators pick it up through the alphabet. |
+| "Compare only accepted flag, not message" | `SequenceRunner(compare_messages=False)` | Message-only mutants (H03/H04) would survive. |
 | "Add 2 more customers / multiple compartments" | `DEFAULT_CUSTOMERS` in `generators.py` | Larger alphabet; M14 detection time changes. |
 
 ## Questions to be able to answer

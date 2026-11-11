@@ -5,6 +5,8 @@
   mutation    run all mutants against chosen strategies
   experiment  full Task-5 protocol -> results/ (CSV + JSON)
   extended    extended evaluation -> results/extended/ (30 seeds, CIs, held-out mutants, ...)
+  change      change-request drill: edit locker/rules_config.py (or --preset/--set) and watch
+              the framework react (see docs/CHANGE_REQUESTS.md)
   report      render charts from results/ (needs matplotlib; --extended for the extended set)
 """
 from __future__ import annotations
@@ -71,13 +73,29 @@ def cmd_demo(args) -> int:
 
 
 def cmd_strategy(args) -> int:
+    if args.preset or args.set or args.policy_sut:
+        from .change import resolve_policy
+        from .policy_sut import PolicySUT
+        from .rules_config import use_policy
+        policy, label = resolve_policy(args.preset, args.set)
+        print(f"[model policy: {label}]")
+        with use_policy(policy):
+            return _run_strategy(args, sut_factory=(lambda: PolicySUT(policy)) if args.policy_sut else None)
+    return _run_strategy(args)
+
+
+def _run_strategy(args, sut_factory=None) -> int:
     gen = EXTENDED_GENERATORS[args.name](args.seed, args.max_length, near_miss=args.near_miss)
     seqs = gen.generate(args.count)
     spec = _mutant_by_name(args.mutant) if args.mutant else None
-    runner = SequenceRunner(sut_factory=spec.factory) if spec else SequenceRunner()
+    if sut_factory is not None:
+        runner = SequenceRunner(sut_factory=sut_factory)
+    else:
+        runner = SequenceRunner(sut_factory=spec.factory) if spec else SequenceRunner()
     recs = runner.run_many(seqs, args.name, args.seed)
     fails = [r for r in recs if not r.passed]
-    target = f"mutant {spec.id} {spec.name}" if spec else "reference SUT"
+    target = (f"mutant {spec.id} {spec.name}" if spec else
+              "PolicySUT (changed rules)" if sut_factory is not None else "reference SUT")
     print(f"strategy={args.name} seed={args.seed} tests={len(recs)} max_length={args.max_length} "
           f"target={target}")
     print(f"PASS={len(recs) - len(fails)}  FAIL={len(fails)}")
@@ -181,6 +199,11 @@ def main(argv=None) -> int:
     sp.add_argument("--seed", type=int, default=1)
     sp.add_argument("--mutant", help="mutant id/name to test instead of the reference SUT")
     sp.add_argument("--show-failures", type=int, default=3)
+    sp.add_argument("--preset", help="use a change-request preset as the model policy (see `change --list`)")
+    sp.add_argument("--set", action="append", metavar="FIELD=VALUE",
+                    help="override a rules_config policy field for the model (repeatable)")
+    sp.add_argument("--policy-sut", action="store_true",
+                    help="execute against PolicySUT (the changed system) instead of the provided SUT")
     common(sp)
     sp.set_defaults(fn=cmd_strategy)
 
@@ -204,6 +227,18 @@ def main(argv=None) -> int:
     sp.add_argument("--count", type=int, default=500)
     sp.add_argument("--max-length", type=int, default=20)
     sp.set_defaults(fn=cmd_extended)
+
+    from .change import cmd_change
+    sp = sub.add_parser("change", help="change-request drill (edit rules_config.py, then run this)")
+    sp.add_argument("--preset", help="ready-made change request; see --list")
+    sp.add_argument("--set", action="append", metavar="FIELD=VALUE",
+                    help="override a policy field, e.g. --set cancel_from=RESERVED,OCCUPIED (repeatable)")
+    sp.add_argument("--list", action="store_true", help="list the presets")
+    sp.add_argument("--all", action="store_true", help="run every preset and print one summary table")
+    sp.add_argument("--seed", type=int, default=1)
+    sp.add_argument("--count", type=int, default=500)
+    sp.add_argument("--max-length", type=int, default=20)
+    sp.set_defaults(fn=cmd_change)
 
     sp = sub.add_parser("report", help="render charts from results")
     sp.add_argument("--extended", action="store_true", help="charts for the extended evaluation")

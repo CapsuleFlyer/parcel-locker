@@ -14,11 +14,12 @@ requirements ──► executable model ──► generators (A/B/C) ──► r
 ## Quick start
 
 ```bash
-python -m unittest discover -s tests -v     # 54 tests: model, generators, runner, oracle, metrics, mutants, extensions
+python -m unittest discover -s tests -v     # 75 tests: model, generators, runner, oracle, metrics, mutants, extensions, change requests
 python -m locker demo                       # 1-minute end-to-end walkthrough
 python -m locker experiment                 # full Task-5 protocol -> results/   (~15 s)
 python -m locker report                     # charts -> results/charts/          (needs matplotlib)
 python -m locker extended                   # extended evaluation -> results/extended/ (~6 min)
+python -m locker change --list              # change-request drill: ready-made rule changes (see below)
 python -m locker report --extended --out results/extended
 ```
 
@@ -54,7 +55,9 @@ regenerates every file in `results/`. Generation is deterministic (checked in te
 | Path | Purpose |
 |---|---|
 | `locker/types.py`, `locker/sut.py` | **Provided** types and reference SUT (unchanged) |
-| `locker/model.py` | Independent executable state machine (declarative rule table), transition & pair catalogues |
+| `locker/rules_config.py` | **The one file to edit for a rule change**: tweakable policy fields, 10 presets, active-policy switch |
+| `locker/model.py` | Independent executable state machine (declarative rule table built from the policy), transition & pair catalogues |
+| `locker/policy_sut.py`, `locker/change.py` | `PolicySUT` (the system after a change) and the `python -m locker change` drill |
 | `locker/oracle.py` | Result/snapshot comparison, state invariants, rejection-purity checks |
 | `locker/runner.py` | `SequenceRunner`: lock-step execution, per-test `ExecutionRecord` |
 | `locker/generators.py` | Strategy A random, B coverage-directed, C transition-pair |
@@ -69,6 +72,7 @@ regenerates every file in `results/`. Generation is deterministic (checked in te
 | `docs/MODEL.md` | States, variables, operations, guards, invariants, assumptions, diagram |
 | `docs/REPORT_SKELETON.md` | Technical-report outline pre-filled with findings and TODOs |
 | `docs/VIVA_PREP.md` | Likely change requests and exactly which files each one touches |
+| `docs/CHANGE_REQUESTS.md` | One-file change-request workflow, field reference, presets, what the config cannot express |
 | `results/` | Required protocol: raw tests, summaries, mutant matrices, charts, `experiment.json` |
 | `results/extended/` | Extended evaluation outputs (CSV, JSON, charts) |
 
@@ -135,30 +139,19 @@ What the data says (details and caveats in `docs/REPORT_SKELETON.md`):
   allowed when occupied" takes 2 tests for B/C but 50 for A), evidence the framework would reveal a
   mis-specified model.
 
+## Practising change requests (viva)
+
+Edit a value in `POLICY` (`locker/rules_config.py`) and run `python -m locker change`: it shows the
+policy diff, how the model's transitions/pairs changed, and how each strategy fares against the
+unchanged SUT (flagged = the change is detected) and against `PolicySUT` (the changed system; must
+pass). Presets: `python -m locker change --preset disable_when_occupied`, all of them with
+`python -m locker change --all`; ad hoc: `--set cancel_from=RESERVED,OCCUPIED`. Revert by setting the value back
+(or `git checkout locker/rules_config.py` once committed). Full guide: `docs/CHANGE_REQUESTS.md`.
+
 ## AI-assistance disclosure
 
-**Tools.** Claude (Anthropic; Claude Code and the Claude app) was used for most of this project.
-A second Claude agent instance wrote the 12 held-out mutants in `locker/mutants_heldout.py`,
-seeing only the SUT and the requirements, not the generators or my own mutants.
-
-**Produced with AI assistance:**
-* the executable model, oracle, runner, generators, metrics, mutants, model mutants, experiment and
-  extended-evaluation code, CLI and chart code (`locker/`);
-* all unit tests (`tests/`, except the provided `test_sut_smoke.py`);
-* `docs/MODEL.md`, `docs/REPORT_SKELETON.md`, `docs/VIVA_PREP.md` and this README;
-* the first draft of the technical report (kept as an editable Claude Docs document; export it as Word/PDF from the doc's Export menu and add it to the submission ZIP).
-
-**Not AI-generated:** the provided starter files (`locker/types.py`, `locker/sut.py`,
-`tests/test_sut_smoke.py`, `data/requirements.md`).
-
-**Results.** Every number in `results/` and in the report comes from running the code in this
-repository (`python -m locker experiment` and `python -m locker extended`); none was typed in by hand.
-Mutants M17-M19 were designed knowing how the generators behave, and the `scenario` strategy
-was added after seeing that B/C miss M19; both are disclosed as limitations in the report.
-
-**Student statement (to be completed by the submitting student):**
-> TODO: describe what *I* reviewed, ran, debugged or changed myself, and confirm that I can explain
-> and modify every module in the viva. The AI tool cannot make this statement on my behalf.
+> TODO (required by the assignment): state which parts were produced with AI assistance, which tool(s),
+> and what you reviewed/changed yourself.
 
 ## Provided starter notes
 

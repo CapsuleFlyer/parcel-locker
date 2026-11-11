@@ -13,6 +13,9 @@ failure diagnostics than a bare "snapshot mismatch".
 """
 from __future__ import annotations
 
+from typing import Optional
+
+from .rules_config import Policy, get_policy
 from .types import Result, Snapshot, State
 
 Problem = tuple[str, str]  # (kind, human-readable detail)
@@ -51,8 +54,16 @@ def compare_step(expected: Result, actual: Result, expected_snap: Snapshot,
     return problems
 
 
-def check_snapshot_invariants(s: Snapshot) -> list[Problem]:
-    """Structural invariants of a single snapshot (see docs/MODEL.md, I1-I4)."""
+def check_snapshot_invariants(s: Snapshot, policy: Optional[Policy] = None) -> list[Problem]:
+    """Structural invariants of a single snapshot (see docs/MODEL.md, I1-I4).
+
+    The credential *formats* come from ``rules_config`` (a requirement-level fact shared with the
+    model); the checks themselves look only at the SUT snapshot, never at the model's state.
+    """
+    policy = policy or get_policy()
+    res_code, ret_code = policy.reservation_code, policy.retrieval_code
+    res_fmt = policy.reservation_code_template.replace("{cid}", "<customer>")
+    ret_fmt = policy.retrieval_code_template.replace("{cid}", "<customer>")
     out: list[Problem] = []
 
     def bad(msg: str) -> None:
@@ -65,15 +76,17 @@ def check_snapshot_invariants(s: Snapshot) -> list[Problem]:
                 f"{s.customer_id!r}/{s.reservation_code!r}/{s.retrieval_code!r}")
     elif s.state == State.RESERVED:
         # I2: reserved => customer + matching reservation code, no retrieval code yet
-        if s.customer_id is None or s.reservation_code != f"R-{s.customer_id}":
-            bad(f"I2 RESERVED needs reservation_code == R-<customer>, got {s.reservation_code!r}")
+        if s.customer_id is None or s.reservation_code != res_code(s.customer_id):
+            bad(f"I2 RESERVED needs reservation_code == {res_fmt}, "
+                f"got {s.reservation_code!r}")
         if s.retrieval_code is not None:
             bad(f"I2 RESERVED must not hold a retrieval code, got {s.retrieval_code!r}")
     elif s.state == State.OCCUPIED:
         # I3: occupied => retrieval code P-<customer> present for the same customer
-        if s.customer_id is None or s.retrieval_code != f"P-{s.customer_id}":
-            bad(f"I3 OCCUPIED needs retrieval_code == P-<customer>, got {s.retrieval_code!r}")
-        if s.reservation_code != (f"R-{s.customer_id}" if s.customer_id else None):
+        if s.customer_id is None or s.retrieval_code != ret_code(s.customer_id):
+            bad(f"I3 OCCUPIED needs retrieval_code == {ret_fmt}, "
+                f"got {s.retrieval_code!r}")
+        if s.reservation_code != (res_code(s.customer_id) if s.customer_id else None):
             bad(f"I3 OCCUPIED reservation_code inconsistent with customer: {s.reservation_code!r}")
     else:
         bad(f"I4 unknown state {s.state!r}")
