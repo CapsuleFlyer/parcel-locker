@@ -1,0 +1,3 @@
+# Core framework: Python 3.10+ standard library only.
+# Optional, only for `python -m locker report` (charts):
+matplotlib>=3.7
